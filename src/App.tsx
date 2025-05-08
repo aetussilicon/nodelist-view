@@ -2,25 +2,15 @@ import './App.css'
 import {ChevronDown, Dot, Flag, Hexagon, Pencil, Plus, X} from "lucide-react";
 import {useEffect, useRef, useState} from "react";
 import axios from "axios";
+import type {TaskGroupProps} from "./interfaces/TasksGroupProps.ts";
+import type {TaskProps} from "./interfaces/TaskProps.ts";
+import {priorityOptions} from "./consts/PriorityOptions.ts";
+import {TasksService} from "./services/TasksService.ts";
+import api from "./Api.ts";
+import toast, {ToastBar, Toaster} from "react-hot-toast";
 
 function App() {
 
-    interface TaskGroupProps {
-        taskGroupId: number;
-        taskGroupName: string;
-        createdAt: string;
-        updatedAt: string;
-    }
-
-    interface TaskProps {
-        taskId: number;
-        title: string;
-        description: string;
-        priority: string;
-        taskGroup: TaskGroupProps;
-        createdAt: string;
-        updatedAt: string;
-    }
 
     const [tasks, setTasks] = useState<TaskProps[]>([]);
     const [expandedGroups, setExpandedGroups] = useState<Record<number, boolean>>({});
@@ -39,45 +29,39 @@ function App() {
 
     const priorityMenuRef = useRef<HTMLDivElement>(null);
 
-    const priorityOptions = [
-        {value: "P1", label: "Urgente", color: "#FF0000"},
-        {value: "P2", label: "Prioridade", color: "#FFA500"},
-        {value: "P3", label: "Média", color: "#FFFF00"},
-        {value: "P4", label: "Baixa", color: "#00FF00"},
-        {value: "P5", label: "Sem prioridade", color: "#808080"}
-    ];
+    const tasksService = new TasksService(api);
 
     useEffect(() => {
         const fetchTasks = async () => {
             try {
-                const res = await axios.get("http://localhost:8081/tasks");
-                if (res.status === 200) {
-                    setTasks(res.data);
+                const data = await tasksService.getTasks();
+                if (!data) return;
 
-                    // Inicializa todos os grupos como expandidos
-                    const groups: Record<number, boolean> = {};
-                    res.data.forEach((task: TaskProps) => {
-                        groups[task.taskGroup.taskGroupId] = true;
-                    });
-                    setExpandedGroups(groups);
+                setTasks(data);
 
-                    // Extrair os grupos únicos das tarefas
-                    const uniqueGroups = Array.from(
-                        new Map(res.data.map((task: TaskProps) => [task.taskGroup.taskGroupId, task.taskGroup])).values()
-                    );
-                    setTaskGroups(uniqueGroups as TaskGroupProps[]);
+                // Inicializa todos os grupos como expandidos
+                const groups: Record<number, boolean> = {};
+                data.forEach((task: TaskProps) => {
+                    groups[task.taskGroup.taskGroupId] = true;
+                });
+                setExpandedGroups(groups);
 
-                    // Inicializar o grupo padrão para novas tarefas se existirem grupos
-                    if (uniqueGroups.length > 0) {
-                        setNewTask(prev => ({
-                            ...prev,
-                            taskGroupId: (uniqueGroups[0] as TaskGroupProps).taskGroupId
-                        }));
-                    }
+                // Extrair os grupos únicos das tarefas
+                const uniqueGroups = Array.from(
+                    new Map(data.map((task: TaskProps) => [task.taskGroup.taskGroupId, task.taskGroup])).values()
+                );
+                setTaskGroups(uniqueGroups as TaskGroupProps[]);
+
+                // Inicializar o grupo padrão para novas tarefas se existirem grupos
+                if (uniqueGroups.length > 0) {
+                    setNewTask(prev => ({
+                        ...prev,
+                        taskGroupId: (uniqueGroups[0] as TaskGroupProps).taskGroupId
+                    }));
                 }
+
             } catch (err) {
                 console.error("Error fetching tasks:", err);
-                throw err;
             }
         };
 
@@ -89,9 +73,9 @@ function App() {
             }
         };
 
-        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener("mousedown", handleClickOutside);
         return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener("mousedown", handleClickOutside);
         };
     }, []);
 
@@ -116,15 +100,8 @@ function App() {
 
     const updateTaskPriority = async (taskId: number, priority: string) => {
         try {
-            const taskToUpdate = tasks.find(task => task.taskId === taskId);
-            if (!taskToUpdate) return;
-
-            const res = await axios.put(`http://localhost:8081/tasks/update/${taskId}`, {
-                ...taskToUpdate,
-                priority
-            });
-
-            if (res.status === 200) {
+            const res =await tasksService.changePriority(taskId, priority);
+            if (res) {
                 setTasks(prevTasks =>
                     prevTasks.map(task =>
                         task.taskId === taskId ? {...task, priority} : task
@@ -132,7 +109,6 @@ function App() {
                 );
             }
 
-            // Fechar o menu após a seleção
             setOpenPriorityMenu(null);
         } catch (err) {
             console.error("Erro ao atualizar a prioridade:", err);
@@ -142,10 +118,10 @@ function App() {
     const handleCreateTask = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await axios.post("http://localhost:8081/tasks/create", newTask);
+            const res = await axios.post("http://100.112.117.90:8081/tasks/create", newTask);
             if (res.status === 201) {
                 // Recarregar as tarefas para obter a lista atualizada
-                const tasksRes = await axios.get("http://localhost:8081/tasks");
+                const tasksRes = await axios.get("http://100.112.117.90:8081/tasks");
                 if (tasksRes.status === 200) {
                     setTasks(tasksRes.data);
                 }
@@ -192,7 +168,7 @@ function App() {
         if (!editingTask) return;
 
         try {
-            const res = await axios.put(`http://localhost:8081/tasks/update/${editingTask.taskId}`, {
+            const res = await axios.put(`http://100.112.117.90:8081/tasks/update/${editingTask.taskId}`, {
                 ...editingTask,
                 taskGroup: undefined // Remover taskGroup para evitar problemas na API
             });
@@ -222,6 +198,7 @@ function App() {
     console.log(tasks);
 
     return (
+        <>
         <div className="bg-background text-text-primary">
             <div className="xs:mx-[10%] flex flex-col items-center min-h-screen gap-4 py-4">
                 <div className="flex items-center justify-between w-full max-w-md">
@@ -507,7 +484,10 @@ function App() {
                                                         ? 'bg-accent'
                                                         : 'bg-background-secondary hover:bg-accent/20'
                                                 }`}
-                                                onClick={() => setEditingTask(prev => ({...prev!, priority: option.value}))}
+                                                onClick={() => setEditingTask(prev => ({
+                                                    ...prev!,
+                                                    priority: option.value
+                                                }))}
                                             >
                                                 <Flag size={16} color={option.color}/>
                                                 <span>{option.label}</span>
@@ -540,6 +520,8 @@ function App() {
                 )}
             </div>
         </div>
+        <Toaster />
+        </>
     )
 }
 
