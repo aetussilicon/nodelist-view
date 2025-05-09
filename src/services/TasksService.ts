@@ -16,7 +16,7 @@ export class TasksService {
     }
 
     async changePriority(taskId: number, priority: string) {
-        const res = await this.http.patch(`/tasks/${taskId}`, { priority });
+        const res = await this.http.patch(`/tasks/priority/${taskId}?priority=${priority}`);
         return res.data;
     }
 
@@ -37,6 +37,16 @@ export class TasksService {
             return res.data;
         } catch (err) {
             console.log("Error while updating task: ", err);
+            throw err;
+        }
+    }
+
+    async markTaskAsCompleted(taskId: number): Promise<TaskProps> {
+        try {
+            const res = await api.patch(`/tasks/complete/${taskId}`);
+            return res.data;
+        } catch (err) {
+            console.log("Error while marking task as completed: ", err);
             throw err;
         }
     }
