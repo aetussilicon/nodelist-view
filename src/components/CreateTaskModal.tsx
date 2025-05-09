@@ -1,34 +1,62 @@
 import { Flag, Plus, X } from "lucide-react";
 import type React from "react";
 import type { NewTaskProps } from "../interfaces/NewTaskProps";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TasksService } from "../services/TasksService";
 import api from "../Api";
 import type { TaskProps } from "../interfaces/TaskProps";
 import type { TaskGroupProps } from "../interfaces/TasksGroupProps";
 import { PriorityOptions } from "../consts/PriorityOptions";
+import { TasksGroupsService } from "../services/TasksGroupsService";
 
 interface CreateTaskModalProps {
     isOpen: boolean;
     setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
     setTasks: React.Dispatch<React.SetStateAction<TaskProps[]>>
-    tasksGroups: TaskGroupProps[]
 }
 
-const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, setIsOpen, setTasks, tasksGroups }) => {
+const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, setIsOpen, setTasks }) => {
     const tasksService = new TasksService(api);
+    const tasksGroupsService = new TasksGroupsService(api);
+    
+    const [availableGroups, setAvailableGroups] = useState<TaskGroupProps[]>([]);
     
     const [newTask, setNewTask] = useState<NewTaskProps>({
         title: "",
         description: "",
         priority: "P5",
-        taskGroupId: 0,
+        taskGroup: 1, // No group como padrão (id 1)
     });
+    
+    const [isCreatingNewGroup, setIsCreatingNewGroup] = useState(false);
+    const [newGroupName, setNewGroupName] = useState<string>("");
+
+    // Carregar todos os grupos disponíveis ao montar o componente
+    useEffect(() => {
+        const loadGroups = async () => {
+            try {
+                const groups = await tasksGroupsService.getGroups();
+                setAvailableGroups(groups);
+            } catch (error) {
+                console.error("Erro ao carregar grupos:", error);
+            }
+        };
+        
+        loadGroups();
+    }, []);
 
     const handleCreateTask = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await tasksService.createTask(newTask);
+            const taskToCreate = { ...newTask };
+            
+            // Se está criando um novo grupo, primeiro cria o grupo
+            if (isCreatingNewGroup && newGroupName.trim()) {
+                const newGroup = await tasksGroupsService.createTaskGroup(newGroupName);
+                taskToCreate.taskGroup = newGroup.taskGroupId;
+            }
+            
+            await tasksService.createTask(taskToCreate);
             const tasksRes = await tasksService.getTasks();
             setTasks(tasksRes);
                 
@@ -37,8 +65,10 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, setIsOpen, se
                 title: "",
                 description: "",
                 priority: "P5",
-                taskGroupId: tasksGroups.length > 0 ? tasksGroups[0].taskGroupId : 0,
+                taskGroup: 1, // Resetar para "No group"
             });
+            setIsCreatingNewGroup(false);
+            setNewGroupName("");
             setIsOpen(false);
         } catch (err) {
             console.error("Erro ao criar tarefa:", err);
@@ -47,10 +77,25 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, setIsOpen, se
     
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setNewTask((prev) => ({
-            ...prev,
-            [name]: name === "taskGroupId" ? parseInt(value, 10) : value,
-        }));
+        
+        if (name === "taskGroup") {
+            const parsedValue = parseInt(value, 10);
+            // Se o valor for -1, o usuário selecionou "Criar novo grupo"
+            if (parsedValue === -1) {
+                setIsCreatingNewGroup(true);
+            } else {
+                setIsCreatingNewGroup(false);
+                setNewTask((prev) => ({
+                    ...prev,
+                    taskGroup: parsedValue
+                }));
+            }
+        } else {
+            setNewTask((prev) => ({
+                ...prev,
+                [name]: value,
+            }));
+        }
     };
 
     return (
@@ -106,23 +151,36 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, setIsOpen, se
                             </div>
 
                             <div className="mb-4">
-                                <label htmlFor="taskGroupId" className="block text-sm font-medium mb-2">
+                                <label htmlFor="taskGroup" className="block text-sm font-medium mb-2">
                                             Grupo
                                 </label>
                                 <select
-                                    id="taskGroupId"
-                                    name="taskGroupId"
-                                    value={newTask.taskGroupId}
+                                    id="taskGroup"
+                                    name="taskGroup"
+                                    value={isCreatingNewGroup ? -1 : newTask.taskGroup}
                                     onChange={handleInputChange}
                                     className="w-full p-2 rounded-lg bg-background-secondary border border-accent focus:outline-none focus:border-accent"
-                                    disabled={true} // Grupo desabilitado por enquanto
                                 >
-                                    {tasksGroups.map((group) => (
+                                    <option value={-1}>Criar novo grupo</option>
+                                    {availableGroups.map((group) => (
                                         <option key={group.taskGroupId} value={group.taskGroupId}>
                                             {group.taskGroupName}
                                         </option>
                                     ))}
                                 </select>
+                                
+                                {isCreatingNewGroup && (
+                                    <div className="mt-2">
+                                        <input
+                                            type="text"
+                                            placeholder="Nome do novo grupo"
+                                            value={newGroupName}
+                                            onChange={(e) => setNewGroupName(e.target.value)}
+                                            className="w-full p-2 rounded-lg bg-background-secondary border border-accent focus:outline-none focus:border-accent"
+                                            required={isCreatingNewGroup}
+                                        />
+                                    </div>
+                                )}
                             </div>
 
                             <div className="mb-6">
