@@ -120,7 +120,12 @@ function App() {
                             <Hexagon size={48} />
                             <h1 className="text-xl font-bold">NodeList</h1>
                         </div>
-                        <CreateTaskModal isOpen={isCreateModalOpen} setIsOpen={setIsCreateModalOpen} setTasks={setTasks} tasksGroups={taskGroups} />
+                        <CreateTaskModal 
+                            isOpen={isCreateModalOpen} 
+                            setIsOpen={setIsCreateModalOpen} 
+                            setTasks={setTasks} 
+                            availableGroups={taskGroups}  
+                        />
                     </div>
 
                     {Object.values(

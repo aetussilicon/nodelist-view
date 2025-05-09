@@ -31,7 +31,7 @@ const UpdateTaskModal: React.FC<UpdateTaskModalProps> = ({ setIsOpen, setEditing
                 title: editingTask.title,
                 description: editingTask.description,
                 priority: getPriorityValueFromLabel(editingTask.priority),
-                taskGroupId: editingTask.taskGroup.taskGroupId,
+                taskGroup: editingTask.taskGroup.taskGroupId,
             };
 
             const updatedTask = await tasksService.updateTask(editingTask.taskId, payload);

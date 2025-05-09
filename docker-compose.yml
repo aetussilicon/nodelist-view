@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  view:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: node_list_view
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    networks:
+      - shared-network
+    volumes:
+      - .:/app
+      - /app/node_modules
+    restart: unless-stopped
+
+networks:
+  shared-network:
+    external: true

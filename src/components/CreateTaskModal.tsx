@@ -1,7 +1,7 @@
 import { Flag, Plus, X } from "lucide-react";
 import type React from "react";
 import type { NewTaskProps } from "../interfaces/NewTaskProps";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { TasksService } from "../services/TasksService";
 import api from "../Api";
 import type { TaskProps } from "../interfaces/TaskProps";
@@ -13,13 +13,12 @@ interface CreateTaskModalProps {
     isOpen: boolean;
     setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
     setTasks: React.Dispatch<React.SetStateAction<TaskProps[]>>
+    availableGroups: TaskGroupProps[]
 }
 
-const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, setIsOpen, setTasks }) => {
+const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, setIsOpen, setTasks, availableGroups }) => {
     const tasksService = new TasksService(api);
     const tasksGroupsService = new TasksGroupsService(api);
-    
-    const [availableGroups, setAvailableGroups] = useState<TaskGroupProps[]>([]);
     
     const [newTask, setNewTask] = useState<NewTaskProps>({
         title: "",
@@ -30,20 +29,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, setIsOpen, se
     
     const [isCreatingNewGroup, setIsCreatingNewGroup] = useState(false);
     const [newGroupName, setNewGroupName] = useState<string>("");
-
-    // Carregar todos os grupos disponíveis ao montar o componente
-    useEffect(() => {
-        const loadGroups = async () => {
-            try {
-                const groups = await tasksGroupsService.getGroups();
-                setAvailableGroups(groups);
-            } catch (error) {
-                console.error("Erro ao carregar grupos:", error);
-            }
-        };
-        
-        loadGroups();
-    }, []);
 
     const handleCreateTask = async (e: React.FormEvent) => {
         e.preventDefault();
