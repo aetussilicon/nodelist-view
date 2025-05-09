@@ -13,7 +13,8 @@ services:
     networks:
       - shared-network
     volumes:
-      - .:/app
+      # Comentar temporariamente o mapeamento de volume para teste
+      # - .:/app
       - /app/node_modules
     restart: unless-stopped
 
