@@ -9,6 +9,7 @@ import { TasksGroupsService } from './services/TasksGroupsService.ts';
 import api from './Api.ts';
 import CreateTaskModal from './components/CreateTaskModal.tsx';
 import UpdateTaskModal from './components/UpdateTasksModal.tsx';
+import { useTaskWebSocket } from './hooks/useTaskWebSocket.ts';
 
 function App() {
     const [tasks, setTasks] = useState<TaskProps[]>([]);
@@ -25,6 +26,12 @@ function App() {
 
     const tasksService = new TasksService(api);
     const tasksGroupsService = new TasksGroupsService(api);
+
+    useTaskWebSocket((updatedTask: TaskProps) => {
+        setTasks((prevTasks) =>
+            prevTasks.map((task) => (task.taskId === updatedTask.taskId ? updatedTask : task))
+        ); 
+    });
 
     useEffect(() => {
         const fetchTasksAndGroups = async () => {
@@ -89,16 +96,8 @@ function App() {
 
     const updateTaskPriority = async (taskId: number, priority: string) => {
         try {
-            // Ajuste aqui: enviar o valor da prioridade, não o label
-            const res = await tasksService.changePriority(taskId, priority);
-            if (res) {
-                setTasks((prevTasks) =>
-                    prevTasks.map((task) => (task.taskId === taskId ? { ...task, priority } : task))
-                );
-            }
-
+            await tasksService.changePriority(taskId, priority);
             setOpenPriorityMenu(null);
-            window.location.reload(); // Recarregar a página após a atualização
         } catch (err) {
             console.error('Erro ao atualizar a prioridade:', err);
         }

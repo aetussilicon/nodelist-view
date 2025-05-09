@@ -7,6 +7,7 @@ import api from "../Api";
 import { TasksService } from "../services/TasksService";
 import { TasksGroupsService } from "../services/TasksGroupsService";
 import { Flag, X } from "lucide-react";
+import { useTaskWebSocket } from "../hooks/useTaskWebSocket";
 
 interface UpdateTaskModalProps {
     setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -23,6 +24,12 @@ const UpdateTaskModal: React.FC<UpdateTaskModalProps> = ({ setIsOpen, setEditing
 
     const tasksService = new TasksService(api);
     const tasksGroupsService = new TasksGroupsService(api);
+
+        useTaskWebSocket((updatedTask: TaskProps) => {
+            setTasks((prevTasks) =>
+                prevTasks.map((task) => (task.taskId === updatedTask.taskId ? updatedTask : task))
+            ); 
+        });
 
     // Buscar grupos disponíveis ao carregar o modal
     useEffect(() => {
@@ -70,14 +77,9 @@ const UpdateTaskModal: React.FC<UpdateTaskModalProps> = ({ setIsOpen, setEditing
 
             await tasksService.updateTask(editingTask.taskId, payload);
 
-            // Atualizar a lista de tarefas e buscar todas novamente para ter os grupos atualizados
-            const tasksRes = await tasksService.getTasks();
-            setTasks(tasksRes);
-
             // Fechar o modal
             setIsOpen(false);
             setEditingTask(null);
-            window.location.reload();
         } catch (err) {
             console.error("Erro ao atualizar tarefa:", err);
         }
