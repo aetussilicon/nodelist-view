@@ -23,6 +23,10 @@ export default tseslint.config(
         'warn',
         { allowConstantExport: true },
       ],
+      'indent': ['error', 4],                              
+      'object-curly-spacing': ['error', 'always'],         
+      'semi': ['error', 'always'],                         
+      'quotes': ['error', 'double', { avoidEscape: true }],
     },
   },
 )
