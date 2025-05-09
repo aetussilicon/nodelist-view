@@ -68,7 +68,7 @@ const UpdateTaskModal: React.FC<UpdateTaskModalProps> = ({ setIsOpen, setEditing
                 taskGroup: finalGroupId, // Usa o grupo selecionado ou o novo grupo criado
             };
 
-            const updatedTask = await tasksService.updateTask(editingTask.taskId, payload);
+            await tasksService.updateTask(editingTask.taskId, payload);
 
             // Atualizar a lista de tarefas e buscar todas novamente para ter os grupos atualizados
             const tasksRes = await tasksService.getTasks();

@@ -11,7 +11,10 @@ O backend desta aplicação está disponível em:
 
 Funcionalidades a serem implementadas:
 
-- [ ] Adicionação de datas e deadlines
+- [ ] Adicionação seleção de datas e deadlines por componente de calendário
+- [ ] Componentizar melhor a aplicação
 - [ ] Cores personalizadas para grupos
-- [ ] Marcar como completa e mover para grupo de concluídas
+- [x] Marcar como completa e mover para grupo de concluídas
 - [ ] Deleção de tarefas
+- [ ] Corrigir atualização de priority no modal.
+- [ ] Adicionar WebSocket para atualizações em tempo real
