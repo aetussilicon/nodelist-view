@@ -154,6 +154,11 @@ function App() {
                                 // Só mostra grupos que contêm pelo menos uma tarefa
                                 return tasks.some((task) => task.taskGroup.taskGroupId === group.taskGroupId);
                             })
+                            .sort((a, b) => {
+                                if (a.taskGroupName === "Concluído") return 1;
+                                if (b.taskGroupName === "Concluído") return -1;
+                                return a.taskGroupId - b.taskGroupId;
+                            })
                             .map((group) => {
                                 // Filtrar tarefas para este grupo
                                 const groupTasks = tasks.filter(
@@ -293,7 +298,6 @@ function App() {
                             })}
                     </div>
 
-                    {/* Modal para editar tarefa */}
                     {isEditModalOpen && editingTask && (
                         <UpdateTaskModal
                             editingTask={editingTask}
