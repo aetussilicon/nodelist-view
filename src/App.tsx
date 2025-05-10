@@ -10,6 +10,7 @@ import api from './Api.ts';
 import CreateTaskModal from './components/CreateTaskModal.tsx';
 import UpdateTaskModal from './components/UpdateTasksModal.tsx';
 import { useTaskWebSocket } from './hooks/useTaskWebSocket.ts';
+import Groups from './components/Groups.tsx';
 
 function App() {
     const [tasks, setTasks] = useState<TaskProps[]>([]);
@@ -148,7 +149,8 @@ function App() {
                     </div>
 
                     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-screen-xl'>
-                        {taskGroups
+                        <Groups />
+                        {/* {taskGroups
                             .filter((group) => {
                                 // Só mostra grupos que contêm pelo menos uma tarefa
                                 return tasks.some((task) => task.taskGroup.taskGroupId === group.taskGroupId);
@@ -294,7 +296,7 @@ function App() {
                                         )}
                                     </div>
                                 );
-                            })}
+                            })} */}
                     </div>
 
                     {isEditModalOpen && editingTask && (

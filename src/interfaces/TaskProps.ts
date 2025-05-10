@@ -5,7 +5,6 @@ export interface TaskProps {
     title: string;
     description: string;
     priority: string;
-    taskGroup: TaskGroupProps;
     completed: boolean;
     completedAt: string | null;
     createdAt: string;
