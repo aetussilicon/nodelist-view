@@ -134,7 +134,7 @@ function App() {
     return (
         <>
             <div className='bg-background text-text-primary'>
-                <div className='xs:mx-[10%] flex flex-col items-center min-h-screen gap-4 py-4'>
+                <div className='xs:mx-[5%] flex flex-col items-center min-h-screen gap-4 py-4'>
                     <div className='flex items-center justify-between w-full max-w-screen-xl'>
                         <div className='flex items-center gap-2'>
                             <Hexagon size={48} />

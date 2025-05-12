@@ -30,4 +30,14 @@ export class TasksGroupsService {
             throw err;
         }
     }
+
+    async getGroupNames(): Promise<Record<number, string>> {
+        try {
+            const res = await this.http.get("/groups/names");
+            return res.data;
+        } catch (err) {
+            console.log("Error while getting task groups names: ", err);
+            throw err;
+        }
+    }
 }

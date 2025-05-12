@@ -1,78 +1,85 @@
 import { ChevronDown } from "lucide-react";
 import type { TaskGroupProps } from "../interfaces/TasksGroupProps";
 import TaskCard from "./TaskCard";
+import { useEffect, useState } from "react";
+import api from "../Api";
+import { TasksGroupsService } from "../services/TasksGroupsService";
 
 const Groups = () => {
-    // Mock data based on TaskGroupDTO
-    const taskGroups: TaskGroupProps[] = [
-        {
-            taskGroupId: 1,
-            taskGroupName: "Work Tasks",
-            tasks: [
-                {
-                    taskId: 1,
-                    title: "Complete project report",
-                    description: "Finish the quarterly report for the client",
-                    priority: "HIGH",
-                    completed: false,
-                    completedAt: null,
-                    createdAt: "12/05/2023 14:30",
-                    updatedAt: "13/05/2023 10:15"
-                },
-                {
-                    taskId: 2,
-                    title: "Team meeting",
-                    description: "Weekly sync with development team",
-                    priority: "MEDIUM",
-                    completed: true,
-                    completedAt: "10/05/2023 11:30",
-                    createdAt: "10/05/2023 09:00",
-                    updatedAt: "10/05/2023 11:30"
-                }
-            ],
-            createdAt: "05/05/2023 08:00",
-            updatedAt: "12/05/2023 16:45"
-        },
-        {
-            taskGroupId: 2,
-            taskGroupName: "Personal Tasks",
-            tasks: [
-                {
-                    taskId: 3,
-                    title: "Grocery shopping",
-                    description: "Buy food for the week",
-                    priority: "LOW",
-                    completed: false,
-                    completedAt: null,
-                    createdAt: "11/05/2023 18:20",
-                    updatedAt: "11/05/2023 18:20"
-                }
-            ],
-            createdAt: "01/05/2023 20:10",
-            updatedAt: "11/05/2023 18:20"
+    const groupsService = new TasksGroupsService(api);
+    const [taskGroups, setTaskGroups] = useState<TaskGroupProps[]>([]);
+    const [groupsNames, setGroupsNames] = useState<Record<number, string>>({});
+    // Modificando para usar um Set para rastrear múltiplos grupos expandidos
+    const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set());
+    
+    useEffect(() => {
+        const fetchGroupsList = async () => {
+            const res = await groupsService.getGroupNames();
+            setGroupsNames(res);
+            console.log("Groups: ", res); 
+        };
+
+        fetchGroupsList();
+    
+    }, []);
+
+    useEffect(() => {
+        const fetchGroups = async () => {
+            const res = await groupsService.getGroups();
+            setTaskGroups(res);
+            console.log("Task Groups: ", res); 
+        };
+
+        fetchGroups();
+    }, [])
+    
+    // Efeito para inicializar todos os grupos como expandidos após carregar os dados
+    useEffect(() => {
+        if (taskGroups.length > 0) {
+            const allGroupIds = new Set(taskGroups.map(group => group.taskGroupId));
+            setExpandedGroups(allGroupIds);
         }
-    ];
+    }, []);
+
+    const toggleGroup = (groupId: number) => {
+        setExpandedGroups(prevExpanded => {
+            const newExpanded = new Set(prevExpanded);
+            if (newExpanded.has(groupId)) {
+                newExpanded.delete(groupId);
+            } else {
+                newExpanded.add(groupId);
+            }
+            return newExpanded;
+        });
+    };
 
     return (
         <>
             {taskGroups.map((group) => (
-              <div key={group.taskGroupId}>
-                <div className="bg-accent text-white p-2 rounded-lg mb-4 font-bold flex items-center justify-between">
-                    <h1>{group.taskGroupName}</h1>
-                    <ChevronDown />
-                </div>
-                <div className="bg-background-secondary text-text-primary p-4 rounded-lg">
-                    {group.tasks.map((task) => (
-                        <div key={task.taskId} className="mb-2">
-                            <TaskCard
-                                task={task} />
+                group.tasks.length != 0 && (
+                    <div key={group.taskGroupId}>
+                        <div className="bg-accent text-white p-2 rounded-lg mb-4 font-bold flex items-center justify-between">
+                            <h1>{group.taskGroupName}</h1>
+                            <button type="button" onClick={() => toggleGroup(group.taskGroupId)} >
+                                <ChevronDown />
+                            </button>
                         </div>
-                    ))}
-                </div>
-              </div>  
-            )) }
+                        {expandedGroups.has(group.taskGroupId) && (
+                            <div className="bg-background-secondary text-text-primary p-2 rounded-lg">
+                                {group.tasks.map((task) => (
+                                    <div key={task.taskId} className="mb-2">
+                                        <TaskCard
+                                            task={task} />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        
+                    </div>  
+                )
+            ))}
         </>
     );
-}
+};
 
 export default Groups;
